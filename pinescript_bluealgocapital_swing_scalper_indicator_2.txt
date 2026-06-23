@@ -1,0 +1,348 @@
+//@version=5
+indicator('BlueAlgoCapital Swing Scalper',overlay = true,max_lines_count = 500)
+
+// Inputs for symbol and lot sizes
+input_symbol = input("BTCUSDm", "Symbol")
+input_account1 =input("88537489", "Account 1")
+input_lot1 = input(0.01, "Lot Size for Account 1")
+
+
+Periods = 100//input(title='ATR Period', defval=100)
+src = input(hl2, title='Source')
+Multiplier = input.float(title='Range', step=0.01, defval=0.07)*100
+changeATR = true//input(title='Change ATR Calculation Method ?', defval=true)
+showsignals = true//input(title='Show Buy/Sell Signals ?', defval=true)
+highlighting = true//input(title='Highlighter On/Off ?', defval=true)
+atr2 = ta.sma(ta.tr, Periods)
+atr = changeATR ? ta.atr(Periods) : atr2
+up = src - Multiplier * atr
+up1 = nz(up[1], up)
+up := close[1] > up1 ? math.max(up, up1) : up
+dn = src + Multiplier * atr
+dn1 = nz(dn[1], dn)
+dn := close[1] < dn1 ? math.min(dn, dn1) : dn
+trend = 1
+trend := nz(trend[1], trend)
+trend := trend == -1 and close > dn1 ? 1 : trend == 1 and close < up1 ? -1 : trend
+//upPlot = plot(trend == 1 ? up : na, title='Up Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+buySignal = trend == 1 and trend[1] == -1 //and barstate.isconfirmed
+//plotshape(buySignal ? up : na, title='UpTrend Begins', location=location.belowbar, style=shape.circle, size=size.tiny, color=color.new(color.green, 0))
+//dnPlot = plot(trend == 1 ? na : dn, title='Down Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+sellSignal = trend == -1 and trend[1] == 1 //and barstate.isconfirmed
+//plotshape(sellSignal ? dn : na, title='DownTrend Begins', location=location.absolute, style=shape.circle, size=size.tiny, color=color.new(color.red, 0))
+mPlot = plot(ohlc4, title='', style=plot.style_circles, linewidth=0)
+longFillColor = highlighting ? trend == 1 ? color.green : color.white : color.white
+shortFillColor = highlighting ? trend == -1 ? color.red : color.white : color.white
+// fill(mPlot, upPlot, title="UpTrend Highligter", color=longFillColor)
+// fill(mPlot, dnPlot, title="DownTrend Highligter", color=shortFillColor)
+// alertcondition(buySignal, title="SuperTrend Buy", message="SuperTrend Buy!")
+// alertcondition(sellSignal, title="SuperTrend Sell", message="SuperTrend Sell!")
+// changeCond = trend != trend[1]
+// alertcondition(changeCond, title="SuperTrend Direction Change", message="SuperTrend has changed direction!")
+
+
+true_trade = false
+true_trade := true_trade[1]
+
+
+// if timeframe.period == 'D' or timeframe.period == 'W' or timeframe.period == 'M'
+//     buySignal := false
+//     sellSignal := false 
+
+// // - INPUTS
+
+//adding date ranges 
+startDate = 1
+startMonth = 1
+startYear = 2000
+
+endDate = 14
+endMonth = 06
+endYear = 2024
+
+// STEP 2:
+// Look if the close time of the current bar
+// falls inside the date range
+inDateRange = (time >= timestamp(syminfo.timezone, startYear,
+         startMonth, startDate, 0, 0)) and
+     (time < timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0))
+
+
+
+plotshape(buySignal  and not inDateRange, color=color.new(color.green, 0), style=shape.labelup, size=size.small, text='Buy', textcolor=color.new(color.white, 0), location=location.belowbar,offset =0,editable = false)
+plotshape(sellSignal and not inDateRange, color=color.new(color.red, 0), style=shape.labeldown, size=size.small, text='Sell', textcolor=color.new(color.white, 0), location=location.abovebar,offset = 0,editable = false)
+
+plotshape(buySignal and inDateRange, title='Buy', text='Buy', location=location.belowbar, style=shape.labelup, size=size.small, color=color.new(color.green, 0), textcolor=color.new(color.white, 0),offset = -2)
+plotshape(sellSignal and inDateRange, title='Sell', text='Sell', location=location.abovebar, style=shape.labeldown, size=size.small, color=color.new(color.red, 0), textcolor=color.new(color.white, 0),offset = -2)
+
+
+//barcolor(trend == 1 and inDateRange? color.rgb(43, 240, 4) : color.rgb(255, 0, 0),offset = 0)
+barcolor(trend == 1 and inDateRange ? color.rgb(43, 240, 4) : na,offset = -2)
+barcolor(trend == -1 and inDateRange ? color.rgb(245, 10, 10) : na,offset = -2)
+
+barcolor(trend == 1 and not inDateRange ? color.rgb(43, 240, 4) : na,offset = 0)
+barcolor(trend == -1 and not inDateRange ? color.rgb(245, 10, 10) : na,offset = 0)
+
+barcolor(trend == 1 and inDateRange ? color.rgb(43, 240, 4) : na,offset = -2)
+barcolor(trend == -1 and inDateRange ? color.rgb(245, 10, 10) : na,offset = -2)
+
+barcolor(trend == 1 and not inDateRange ? color.rgb(43, 240, 4) : na,offset = 0)
+barcolor(trend == -1 and not inDateRange ? color.rgb(245, 10, 10) : na,offset = 0)
+
+barcolor(trend == 1 and inDateRange ? color.rgb(43, 240, 4) : na,offset = -2)
+barcolor(trend == -1 and inDateRange ? color.rgb(245, 10, 10) : na,offset = -2)
+
+barcolor(trend == 1 and not inDateRange ? color.rgb(43, 240, 4) : na,offset = 0)
+barcolor(trend == -1 and not inDateRange ? color.rgb(245, 10, 10) : na,offset = 0)
+
+Alert_MessageLong = '[{"symbol":"' + input_symbol + '","side":"buy","' + input_account1 + 'lot":"' + str.tostring(input_lot1)+'"}]'
+Alert_MessageShort = '[{"symbol":"' + input_symbol + '","side":"sell","' + input_account1 + 'lot":"' + str.tostring(input_lot1) + '"}]'
+
+exit_alert = '[{"symbol":"' + input_symbol + '","account":"' + input_account1 + '","close":"all"}]'
+
+
+
+
+
+
+// if buySignal 
+//     alert('BUY Alert Triggered',alert.freq_once_per_bar_close)
+
+// if sellSignal
+//     alert('SELL Alert Triggered',alert.freq_once_per_bar_close)
+
+alertcondition(buySignal,"Buy Alert")
+alertcondition(sellSignal,"Sell Alert")
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+lb = input.int(5, title='Support/Resistance', minval=1)
+rb = 5//input.int(5, title='Right Bars', minval=1)
+showsupres = true//input.bool(true, title='Support/Resistance', inline='srcol')
+supcol = color.lime//input.color(color.lime, title='', inline='srcol')
+rescol = color.red//input.color(color.red, title='', inline='srcol')
+srlinestyle = line.style_dashed//input.string(line.style_solid, title='Line Style/Width', options=[line.style_solid, line.style_dashed, line.style_dotted], inline='style')
+srlinewidth = 1//input.int(3, title='', minval=1, maxval=5, inline='style')
+changebarcol = false//input.bool(true, title='Change Bar Color', inline='bcol')
+bcolup = color.blue//input.color(color.blue, title='', inline='bcol')
+bcoldn = color.black//input.color(color.black, title='', inline='bcol')
+
+ph = ta.pivothigh(lb, rb)
+pl = ta.pivotlow(lb, rb)
+
+iff_1 = pl ? -1 : na  // trend11 direction
+hl = ph ? 1 : iff_1
+iff_2 = pl ? pl : na  // similar to zigzag but may have multiple highs/lows
+zz = ph ? ph : iff_2
+valuewhen_1 = ta.valuewhen(hl, hl, 1)
+valuewhen_2 = ta.valuewhen(zz, zz, 1)
+zz := pl and hl == -1 and valuewhen_1 == -1 and pl > valuewhen_2 ? na : zz
+valuewhen_3 = ta.valuewhen(hl, hl, 1)
+valuewhen_4 = ta.valuewhen(zz, zz, 1)
+zz := ph and hl == 1 and valuewhen_3 == 1 and ph < valuewhen_4 ? na : zz
+
+valuewhen_5 = ta.valuewhen(hl, hl, 1)
+valuewhen_6 = ta.valuewhen(zz, zz, 1)
+hl := hl == -1 and valuewhen_5 == 1 and zz > valuewhen_6 ? na : hl
+valuewhen_7 = ta.valuewhen(hl, hl, 1)
+valuewhen_8 = ta.valuewhen(zz, zz, 1)
+hl := hl == 1 and valuewhen_7 == -1 and zz < valuewhen_8 ? na : hl
+zz := na(hl) ? na : zz
+
+findprevious() =>  // finds previous three points (b, c, d, e)
+    ehl = hl == 1 ? -1 : 1
+    loc1 = 0.0
+    loc2 = 0.0
+    loc3 = 0.0
+    loc4 = 0.0
+    xx = 0
+    for x = 1 to 1000 by 1
+        if hl[x] == ehl and not na(zz[x])
+            loc1 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl
+    for x = xx to 1000 by 1
+        if hl[x] == ehl and not na(zz[x])
+            loc2 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl == 1 ? -1 : 1
+    for x = xx to 1000 by 1
+        if hl[x] == ehl and not na(zz[x])
+            loc3 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl
+    for x = xx to 1000 by 1
+        if hl[x] == ehl and not na(zz[x])
+            loc4 := zz[x]
+            break
+    [loc1, loc2, loc3, loc4]
+
+float a = na
+float b = na
+float c = na
+float d = na
+float e = na
+if not na(hl)
+    [loc1, loc2, loc3, loc4] = findprevious()
+    a := zz
+    b := loc1
+    c := loc2
+    d := loc3
+    e := loc4
+    e
+
+_hh = zz and a > b and a > c and c > b and c > d
+_ll = zz and a < b and a < c and c < b and c < d
+_hl = zz and (a >= c and b > c and b > d and d > c and d > e or a < b and a > c and b < d) 
+_lh = zz and (a <= c and b < c and b < d and d < c and d < e or a > b and a < c and b > d)
+
+// plotshape(_hl, text='HL', title='Higher Low', style=shape.labelup, color=color.new(color.lime, 0), textcolor=color.new(color.black, 0), location=location.belowbar, offset=-rb)
+// plotshape(_hh, text='HH', title='Higher High', style=shape.labeldown, color=color.new(color.lime, 0), textcolor=color.new(color.black, 0), location=location.abovebar, offset=-rb)
+// plotshape(_ll, text='LL', title='Lower Low', style=shape.labelup, color=color.new(color.red, 0), textcolor=color.new(color.white, 0), location=location.belowbar, offset=-rb)
+// plotshape(_lh, text='LH', title='Lower High', style=shape.labeldown, color=color.new(color.red, 0), textcolor=color.new(color.white, 0), location=location.abovebar, offset=-rb)
+
+float res = na
+float sup = na
+res := _lh ? zz : res[1]
+sup := _hl ? zz : sup[1]
+
+int trend1 = na
+iff_3 = close < sup ? -1 : nz(trend1[1])
+trend1 := close > res ? 1 : iff_3
+
+res := trend1 == 1 and _hh or trend1 == -1 and _lh ? zz : res
+sup := trend1 == 1 and _hl or trend1 == -1 and _ll ? zz : sup
+rechange = res != res[1]
+suchange = sup != sup[1]
+
+var line resline = na
+var line supline = na
+if showsupres
+    if rechange and trend == -1
+        line.set_x2(resline, bar_index)
+        line.set_extend(resline, extend=extend.none)
+        resline := line.new(x1=bar_index - rb, y1=res, x2=bar_index, y2=res, color=rescol, extend=extend.right, style=srlinestyle, width=srlinewidth)
+        resline
+
+    if suchange and trend == 1
+        line.set_x2(supline, bar_index)
+        line.set_extend(supline, extend=extend.none)
+        supline := line.new(x1=bar_index - rb, y1=sup, x2=bar_index, y2=sup, color=supcol, extend=extend.right, style=srlinestyle, width=srlinewidth)
+        supline
+
+iff_4 = trend1 == 1 ? bcolup : bcoldn
+barcolor(color=changebarcol ? iff_4 : na)
+
+if trend == 1
+    line.delete(resline)
+
+if trend == -1
+    line.delete(supline)
+
+
+
+// length = lb//input(4, title='High/Low length')
+// h = ta.highest(high, length * 2 + 1)
+// l = ta.lowest(low, length * 2 + 1)
+// f_isMin(len) =>
+//     l == low[len]
+// f_isMax(len) =>
+//     h == high[len]
+
+// var dirUp = false
+// var lastLow = high * 100
+// var lastHigh = 0.0
+// var timeLow = bar_index
+// var timeHigh = bar_index
+// var line li = na
+// f_drawLine() =>
+//     _li_color = dirUp ? color.teal : color.orange
+//     line.new(timeHigh - length, lastHigh, timeLow - length, lastLow, xloc.bar_index, color=_li_color, width=2)
+
+// if dirUp
+//     if f_isMin(length) and low[length] < lastLow
+//         lastLow := low[length]
+//         timeLow := bar_index
+//         line.delete(li)
+//         li := f_drawLine()
+//         li
+
+//     if f_isMax(length) and high[length] > lastLow
+//         lastHigh := high[length]
+//         timeHigh := bar_index
+//         dirUp := false
+//         li := f_drawLine()
+//         li
+
+// if not dirUp
+//     if f_isMax(length) and high[length] > lastHigh
+//         lastHigh := high[length]
+//         timeHigh := bar_index
+//         line.delete(li)
+//         li := f_drawLine()
+//         li
+//     if f_isMin(length) and low[length] < lastHigh
+//         lastLow := low[length]
+//         timeLow := bar_index
+//         dirUp := true
+//         li := f_drawLine()
+//         if f_isMax(length) and high[length] > lastLow
+//             lastHigh := high[length]
+//             timeHigh := bar_index
+//             dirUp := false
+//             li := f_drawLine()
+//             li
+
+rebuy = ta.crossover(close,sup) and trend == 1
+resell = ta.crossunder(close,res) and trend == -1 
+
+
+rebuy1 = ta.crossover(close,res) and trend == 1
+resell1 = ta.crossunder(close,sup) and trend == -1 
+
+
+long_entered = false
+long_entered := long_entered[1]
+
+short_entered = false 
+short_entered := short_entered[1]
+
+if buySignal or rebuy
+    long_entered := true
+
+if rebuy1 or trend == -1 
+    long_entered := false
+
+
+if sellSignal or resell
+    short_entered := true
+
+if resell1 or trend == 1 
+    short_entered := false
+
+
+
+alertcondition(rebuy,"Re-Entry-Buy")
+alertcondition(resell,"Re-Entry-Sell")
+
+rebuy := rebuy and long_entered[1] == false
+resell := resell and short_entered[1] == false
+
+if buySignal or rebuy
+    alert(Alert_MessageLong,alert.freq_once_per_bar_close)
+
+if sellSignal or resell
+    alert(Alert_MessageShort,alert.freq_once_per_bar_close)
+
+
+
+plotshape(rebuy, color=color.new(#d641ff, 0), style=shape.triangleup, text='RE-ENTRY', textcolor=color.new(#d641ff, 0), location=location.belowbar,size=size.tiny)
+plotshape(resell, color=color.new(#faea07, 0), style=shape.triangledown, text='RE-ENTRY', textcolor=color.new(#faea07, 0), location=location.abovebar,size=size.tiny)
+
+
+plotshape(rebuy1, color=color.new(#d641ff, 0), text='🚀', textcolor=color.new(#d641ff, 0), location=location.abovebar,size=size.tiny)
+plotshape(resell1, color=color.new(#f80101, 0), text='📉', textcolor=color.new(#faea07, 0), location=location.belowbar,size=size.tiny)
+
+if rebuy1 or resell1
+    alert(exit_alert,alert.freq_once_per_bar_close)
